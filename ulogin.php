@@ -3,7 +3,7 @@
 //===================================================== 
 // ULogin DataLife Engine 9.4 
 //----------------------------------------------------- 
-// Модуль авторизации и регистрации при помощи OpenID 
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ OpenID 
 //----------------------------------------------------- 
 // http://ulogin.ru/ 
 //----------------------------------------------------- 
@@ -20,8 +20,8 @@ if(!defined('DATALIFEENGINE'))
 
 
 function translit($content){  
-$transA=array('А'=>'a','Б'=>'b','В'=>'v','Г'=>'g','Ґ'=>'g','Д'=>'d','Е'=>'e','Є'=>'e','Ё'=>'yo','Ж'=>'zh','З'=>'z','И'=>'i','І'=>'i','Й'=>'y','Ї'=>'y','К'=>'k','Л'=>'l','М'=>'m','Н'=>'n','О'=>'o','П'=>'p','Р'=>'r','С'=>'s','Т'=>'t','У'=>'u','Ў'=>'u','Ф'=>'f','Х'=>'h','Ц'=>'c','Ч'=>'ch','Ш'=>'sh','Щ'=>'sch','Ъ'=>'','Ы'=>'y','Ь'=>'','Э'=>'e','Ю'=>'yu','Я'=>'ya');  
-$transB=array('а'=>'a','б'=>'b','в'=>'v','г'=>'g','ґ'=>'g','д'=>'d','е'=>'e','ё'=>'yo','є'=>'e','ж'=>'zh','з'=>'z','и'=>'i','і'=>'i','й'=>'y','ї'=>'y','к'=>'k','л'=>'l','м'=>'m','н'=>'n','о'=>'o','п'=>'p','р'=>'r','с'=>'s','т'=>'t','у'=>'u','ў'=>'u','ф'=>'f','х'=>'h','ц'=>'c','ч'=>'ch','ш'=>'sh','щ'=>'sch','ъ'=>'','ы'=>'y','ь'=>'','э'=>'e','ю'=>'yu','я'=>'ya','&quot;'=>'','&amp;'=>'','µ'=>'u','№'=>''); 
+$transA=array('пїЅ'=>'a','пїЅ'=>'b','пїЅ'=>'v','пїЅ'=>'g','пїЅ'=>'g','пїЅ'=>'d','пїЅ'=>'e','пїЅ'=>'e','пїЅ'=>'yo','пїЅ'=>'zh','пїЅ'=>'z','пїЅ'=>'i','пїЅ'=>'i','пїЅ'=>'y','пїЅ'=>'y','пїЅ'=>'k','пїЅ'=>'l','пїЅ'=>'m','пїЅ'=>'n','пїЅ'=>'o','пїЅ'=>'p','пїЅ'=>'r','пїЅ'=>'s','пїЅ'=>'t','пїЅ'=>'u','пїЅ'=>'u','пїЅ'=>'f','пїЅ'=>'h','пїЅ'=>'c','пїЅ'=>'ch','пїЅ'=>'sh','пїЅ'=>'sch','пїЅ'=>'','пїЅ'=>'y','пїЅ'=>'','пїЅ'=>'e','пїЅ'=>'yu','пїЅ'=>'ya');  
+$transB=array('пїЅ'=>'a','пїЅ'=>'b','пїЅ'=>'v','пїЅ'=>'g','пїЅ'=>'g','пїЅ'=>'d','пїЅ'=>'e','пїЅ'=>'yo','пїЅ'=>'e','пїЅ'=>'zh','пїЅ'=>'z','пїЅ'=>'i','пїЅ'=>'i','пїЅ'=>'y','пїЅ'=>'y','пїЅ'=>'k','пїЅ'=>'l','пїЅ'=>'m','пїЅ'=>'n','пїЅ'=>'o','пїЅ'=>'p','пїЅ'=>'r','пїЅ'=>'s','пїЅ'=>'t','пїЅ'=>'u','пїЅ'=>'u','пїЅ'=>'f','пїЅ'=>'h','пїЅ'=>'c','пїЅ'=>'ch','пїЅ'=>'sh','пїЅ'=>'sch','пїЅ'=>'','пїЅ'=>'y','пїЅ'=>'','пїЅ'=>'e','пїЅ'=>'yu','пїЅ'=>'ya','&quot;'=>'','&amp;'=>'','пїЅ'=>'u','пїЅ'=>''); 
 $content=trim(strip_tags($content));  
 $content=strtr($content,$transA);  
 $content=strtr($content,$transB);  
@@ -46,9 +46,9 @@ $stopregistration = FALSE;
 $s = file_get_contents('http://ulogin.ru/token.php?token=' . $_POST['token'] . '&host=' . $_SERVER['HTTP_HOST']); 
 $user = json_decode($s, true); 
 
-//print_r($user); //закоментировать 
+//print_r($user); //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 
 
-if(isset($user['nickname'])){ $nickname = $user['nickname'];} else $nickname =""; 
+if(isset($user['nickname'])){ $nickname = convert_unicode($user['nickname']);} else $nickname =""; 
 if(isset($user['first_name'])){ $first_name = convert_unicode($user['first_name']);} else $first_name =""; 
 if(isset($user['last_name'])){ $last_name = convert_unicode($user['last_name']);}  else $last_name =""; 
 
@@ -58,11 +58,18 @@ if($nickname!=''){$name = $nickname;}
 elseif($first_name!=''){ $name = translit($first_name);} 
 elseif($first_name!=''){$name = translit($last_name);} 
 else{$name='ulogin';} 
+
+#РІСЃС‘ РїСЂРµРєСЂР°СЃРЅРѕ, Р° РµСЃР»Рё СЋР·РµСЂ СЃРјРµРЅРёС‚ РїР°СЂРѕР»СЊ РІ СЃРІРѕРµРј РїСЂРѕС„РёР»Рµ? РѕРЅ Р±РѕР»СЊС€Рµ РЅРµ СЃРјРѕР¶РµС‚ Р·Р°Р»РѕРіРёРЅРёС‚СЊСЃСЏ?
 if(isset($user['identity'])) { $password = md5( trim($user['identity']) );} else  $password = md5( 'password') ; 
+
 if(isset($user['photo'])){ $photo = $user['photo'];} else $photo =""; 
 if(isset($user['email'])){ $email = $user['email'];} else $email = /*$name.'@'.clean_url($config['http_home_url'])*/clean_url($user['identity']).'@'.$user['network'].'.com'; 
 
+#Р“РґРµ С…РѕС‚СЊ РєР°РєР°СЏ С‚Рѕ С„РёР»СЊС‚СЂР°С†РёСЏ РІС…РѕРґСЏС‰РёС… РґР°РЅРЅС‹С… РѕС‚ uLogin?
+
 $access_token = md5($email); 
+
+$bdate = $user['last_name'];
 
 $array[] = $name; 
 $bday = explode('.',$bdate); 
@@ -132,6 +139,7 @@ foreach($array as $login){
                  if($check_mail['how'] > 0)  $email=preg_replace('![^\w\d]*!','',$user['identity']).'@'.$user['network'].'.com';
                  //$email = $login.'@'.clean_url($config['http_home_url']); 
             
+    #Р·Р°С‡РµРј РѕРїСЏС‚СЊ РїРѕРґРєР»СЋС‡Р°С‚СЊ РєР»Р°СЃСЃ, РµСЃР»Рё РѕРЅ СѓР¶Рµ РїРѕРґРєР»СЋС‡РµРЅ РІ СЃС‚СЂРѕРєРµ в„–38??
                 require_once ENGINE_DIR . '/classes/parse.class.php'; 
                 $parse = new ParseFilter( ); 
 
