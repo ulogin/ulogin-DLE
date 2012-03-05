@@ -14,6 +14,19 @@ uLogin — это инструмент, который позволяет пол
 
 == Installation ==
 
+
+Создайте таблицу в базе данных. Вместо prefix_ укажите ваш префикс к таблицам DLE. Ниже приведен код SQL-скрипта:
+
+CREATE TABLE IF NOT EXISTS `prefix_ulogin` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` int(10) unsigned NOT NULL,
+  `ident` char(255) NOT NULL,
+  `email` char(255) DEFAULT NULL,
+  `seed` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM;
+
+
 Скопируйте файл ulogin.php в /engine/modules/
 В файл login.tpl вашего шаблона выше формы авторизации вставляем (или вместо)
 
@@ -48,3 +61,9 @@ showRow( $lang['opt_sys_regulogin'], $lang['opt_sys_regulogind'], makeDropDown( 
 Зайти в Админцентр - Настройки системы - Настройки пользователей
 Выстаить параметр "Помещать пользователей авторизующихся через ULogin в группе:"
 Предварительно можно создать спец. группу, например "ULogin"
+
+
+Если вы используете DLE с кодировкой UTF, то в файле ulogin.php раскомментируйте следующие строки:
+	//	$fullname = $user['first_name'].' '.$user['last_name'];
+	//	$login=$user['first_name'].'_'.$user['last_name'];
+
