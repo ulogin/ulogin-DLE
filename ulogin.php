@@ -78,8 +78,8 @@ function check_reg($name, $email) {
 	global $lang, $db, $banned_info, $relates_word;
 	$stop = false;
 	
-	if( strlen( $name ) > 20 ) @$name = substr($name, 0, 20);
-	if( preg_match( "/[\||\'|\<|\>|\[|\]|\"|\!|\?|\$|\@|\/|\\\|\&\~\*\{\+]/", $name ) ) @$name = preg_replace("/[\||\'|\<|\>|\[|\]|\"|\!|\?|\$|\@|\/|\\\|\&\~\*\{\+]/",'',$name);
+	if( strlen( $name ) > 20 ) $name = substr($name, 0, 20);
+	if( preg_match( "/[\||\'|\<|\>|\[|\]|\"|\!|\?|\$|\@|\/|\\\|\&\~\*\{\+]/", $name ) ) $name = preg_replace("/[\||\'|\<|\>|\[|\]|\"|\!|\?|\$|\@|\/|\\\|\&\~\*\{\+]/",'',$name);
 	if (strpos( strtolower ($name) , '.php' ) !== false) {
             @$name = str_replace('.php', '', $name);
             @$name = str_replace('.PHP', '', $name);
@@ -102,7 +102,7 @@ if(isset($_POST['token'])){
 	$s = file_get_contents('http://ulogin.ru/token.php?token=' . $_POST['token'] . '&host=' . $_SERVER['HTTP_HOST']);
 	$user = json_decode($s, true);
         if (isset($user['error'])){
-            
+            return;
         }
         $db->super_query("CREATE TABLE IF NOT EXISTS `".USERPREFIX."_ulogin` (
                               `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
