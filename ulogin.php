@@ -25,7 +25,7 @@ $parse->safe_mode = true;
 $parse->allow_url = false;
 $parse->allow_image = false;
 
-function login_user($id,$pass) {
+function login_ulogin_user($id,$pass) {
 	global $db;
 	global $config;
 	global $is_logged;
@@ -74,7 +74,7 @@ function login_user($id,$pass) {
 	$is_logged = TRUE;
 }
 
-function check_reg($name, $email) {
+function check_ulogin_register($name, $email) {
 	global $lang, $db, $banned_info, $relates_word;
 	$stop = false;
 	
@@ -120,7 +120,7 @@ if(isset($_POST['token'])){
 	}
 
 	if($member_id)
-		login_user($member_id['user_id'],$password);
+                login_ulogin_user($member_id['user_id'],$password);
 	else {
 		$fullname = $config['charset'] != 'utf-8' ? convert_unicode($user['first_name'].' '.$user['last_name'], $config['charset']) : $user['first_name'].' '.$user['last_name'];
                 $fullname = $db->safesql( $parse->process( $fullname) );
@@ -184,7 +184,7 @@ if(isset($_POST['token'])){
 				$db->query( "UPDATE " . USERPREFIX . "_users set foto='$foto_name' where user_id=$user_id" );
 			}
 		}
-		login_user($user_id,$password);
+		login_ulogin_user($user_id,$password);
 	}
 	unset($_POST['token']);
 }
