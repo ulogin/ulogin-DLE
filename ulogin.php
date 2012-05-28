@@ -141,7 +141,7 @@ if(isset($_POST['token'])){
                 $idx = 0;
                 $email_parts = explode('@', $email);
                 $test_login = $login;
-		while ($reg_error = check_ulogin_reg($test_login, $email)){
+		while ($reg_error = check_ulogin_register($test_login, $email)){
                     $idx ++;
                     $test_login = $login.'_'.$idx;
                     $email = $email_parts[0].'+'.$test_login.'@'.$email_parts[1];
