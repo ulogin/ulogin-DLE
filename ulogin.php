@@ -1,9 +1,9 @@
-<?php 
+<?php
 
 //=====================================================
 // ULogin DataLife Engine 9.4
 //-----------------------------------------------------
-// Модуль авторизации и регистрации при помощи uLogin
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ uLogin
 //-----------------------------------------------------
 // http://ulogin.ru/
 // team@ulogin.ru
@@ -19,21 +19,17 @@ if(!defined('DATALIFEENGINE'))
 }
 
 require_once ENGINE_DIR . '/classes/parse.class.php';
+include ('engine/api/api.class.php');
 
-$parse = new ParseFilter( );
-$parse->safe_mode = true;
-$parse->allow_url = false;
-$parse->allow_image = false;
-
-function login_ulogin_user($id,$pass) {
-	global $db;
-	global $config;
-	global $is_logged;
-	global $_IP;
-	global $_TIME;
-	global $user;
-	$add_time = time() + ($config['date_adjust'] * 60);
-	$_IP = $db->safesql( $_SERVER['REMOTE_ADDR'] );
+function login_ulogin_user($id, $pass) {
+    global $db;
+    global $config;
+    global $is_logged;
+    global $_IP;
+    global $_TIME;
+    
+    $add_time = time() + ($config['date_adjust'] * 60);
+    $_IP = $db->safesql( $_SERVER['REMOTE_ADDR'] );
 	$member_id = $db->super_query( "SELECT user_id FROM " . USERPREFIX . "_users where user_id=".$id );
 	set_cookie( "dle_user_id", $member_id['user_id'], 365 );
 	set_cookie( "dle_password", $_POST['login_password'], 365 );
@@ -47,7 +43,7 @@ function login_ulogin_user($id,$pass) {
 	$_SESSION['member_lasttime'] = $member_id['lastdate'];
 	$_SESSION['dle_log'] = 0;
 
-	$dle_login_hash = md5( strtolower( $_SERVER['HTTP_HOST'] . $member_id['name'] . sha1($password) . $config['key'] . date( "Ymd" ) ) );
+	$dle_login_hash = md5( strtolower( $_SERVER['HTTP_HOST'] . $member_id['name'] . sha1($pass) . $config['key'] . date( "Ymd" ) ) );
 
 	if( $config['log_hash'] ) {
 		$salt = "abchefghjkmnpqrstuvwxyz0123456789";
@@ -65,16 +61,16 @@ function login_ulogin_user($id,$pass) {
 		set_cookie( "dle_hash", $hash, 365 );
 
 		$_COOKIE['dle_hash'] = $hash;
-		$member_id['hash'] = $hash;
+		$mem_id['hash'] = $hash;
 
 	}
 	else
-		$db->query( "UPDATE LOW_PRIORITY " . USERPREFIX . "_users set lastdate='{$_TIME}', logged_ip='" . $_IP . "' WHERE user_id='$member_id[user_id]'" );
-
+            $db->query( "UPDATE LOW_PRIORITY " . USERPREFIX . "_users set lastdate='{$_TIME}', logged_ip='" . $_IP . "' WHERE user_id='$member_id[user_id]'" );
+                
 	$is_logged = TRUE;
 }
 
-function check_ulogin_register($name, $email) {
+function check_ulogin_register($name) {
 	global $lang, $db, $banned_info, $relates_word;
 	$stop = false;
 	
@@ -88,105 +84,259 @@ function check_ulogin_register($name, $email) {
 	$name = strtolower( $name );
         $search_name = strtr( $name, $relates_word );
 		
-	$row = $db->super_query( "SELECT COUNT(*) as count FROM " . USERPREFIX . "_users WHERE email = '$email' OR LOWER(name) REGEXP '[[:<:]]{$search_name}[[:>:]]' OR name = '$name'" );
+	$row = $db->super_query("SELECT COUNT(*) as count FROM ".USERPREFIX."_users WHERE LOWER(name) REGEXP '[[:<:]]{$search_name}[[:>:]]' OR name = '$name'");
 	if( $row['count'] ) $stop = true;
 
 	return $stop;
 
 }
 
-if(isset($_POST['token'])){
 
-	$stopregistration = false;
-
-	$s = file_get_contents('http://ulogin.ru/token.php?token=' . $_POST['token'] . '&host=' . $_SERVER['HTTP_HOST']);
-	$user = json_decode($s, true);
-        if (isset($user['error'])){
-            return;
-        }
-        $db->super_query("CREATE TABLE IF NOT EXISTS `".USERPREFIX."_ulogin` (
-                              `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                              `user_id` int(10) unsigned NOT NULL,
-                              `ident` char(255) NOT NULL,
-                              `email` char(255) DEFAULT NULL,
-                              `seed` int(10) unsigned NOT NULL,
-                              PRIMARY KEY (`id`)
-                            ) ENGINE=MyISAM;");
-	$ulogin_id = $db->super_query( "SELECT user_id,seed FROM " . USERPREFIX . "_ulogin where ident='".$db->safesql($user['identity'])."'" );
-        $member_id = FALSE;
-        if($ulogin_id) {
-		$password = md5($user['identity'].$ulogin_id['seed']);
-		$member_id = $db->super_query( "SELECT user_id FROM " . USERPREFIX . "_users where user_id=".$ulogin_id['user_id'] );
-	}
-
-	if($member_id)
-                login_ulogin_user($member_id['user_id'],$password);
-	else {
-		$fullname = $config['charset'] != 'utf-8' ? convert_unicode($user['first_name'].' '.$user['last_name'], $config['charset']) : $user['first_name'].' '.$user['last_name'];
-                $fullname = $db->safesql( $parse->process( $fullname) );
-                $login = isset ($user['nickname']) ? $user['nickname'] : $user['first_name'];
-		$login = $config['charset'] != 'utf-8' ? convert_unicode($login) : $login;
-                $login = $db->safesql( $parse->process( htmlspecialchars( trim( $login ) ) ) );
-                $login = preg_replace('#\s+#i', ' ', $login);
-
-                $not_allow_symbol = array ("\x22", "\x60", "\t", '\n', '\r', "\n", "\r", '\\', ",", "/", "¬", "#", ";", ":", "~", "[", "]", "{", "}", ")", "(", "*", "^", "%", "$", "<", ">", "?", "!", '"', "'", " " );
-                $email = $user['email'];
-                $email = $db->safesql(trim( str_replace( $not_allow_symbol, '', strip_tags( stripslashes( $email)))));
-                
-                
-		if(isset($user['photo'])){
-			$photo = $user['photo'];
-		} else $photo ="";
-                
-                $idx = 0;
-                $email_parts = explode('@', $email);
-                $test_login = $login;
-		while ($reg_error = check_ulogin_register($test_login, $email)){
-                    $idx ++;
-                    $test_login = $login.'_'.$idx;
-                    $email = $email_parts[0].'+'.$test_login.'@'.$email_parts[1];
-                }
-                $login = $test_login;    
-                
-		$stopregistration = false;
-
-		$config['reg_group_ulogin'] = intval( $config['reg_group_ulogin'] ) ? intval( $config['reg_group_ulogin'] ) : 4;
-		$seed=mt_rand();
-		$password = md5($user['identity'].$seed);
-		$regpassword = md5($password);
-
-		$add_time = time() + ($config['date_adjust'] * 60);
-		$_IP = $db->safesql( $_SERVER['REMOTE_ADDR'] );
-			
-		if( intval( $config['reg_group'] ) < 3 ) $config['reg_group'] = 4;
-			
-		$db->query( "INSERT INTO " . USERPREFIX . "_users (name, fullname, password, email, reg_date, lastdate, user_group, info, signature, favorites, xfields, logged_ip) VALUES ('$login', '$fullname', '$regpassword', '$email', '$add_time', '$add_time', '" . $config['reg_group_ulogin'] . "', '', '', '', '', '" . $_IP . "')" );
-		$user_id = $id = $db->insert_id();
-                if ($ulogin_id)
-                    $db->query("UPDATE " . USERPREFIX . "_ulogin SET user_id =".$user_id." where ident ='".$db->safesql($user['identity'])."'");
-                else
-                    $db->query("INSERT INTO " . USERPREFIX . "_ulogin (user_id, ident, email, seed) values ($id, '".$user['identity']."','".$user['email']."', $seed)");
-                
-		$id++;
-		if( $photo ) {
-			$fparts = pathinfo($photo);
-			$tmp_name = $fparts['basename'];
-			$type = $fparts['extension'];
-			include_once ENGINE_DIR . '/classes/thumb.class.php';
-			$res = @copy($photo, ROOT_DIR . "/uploads/fotos/".$tmp_name);
-			if( $res ) {
-				$thumb = new thumbnail( ROOT_DIR . "/uploads/fotos/".$tmp_name );
-				$thumb->size_auto( 100 );
-				$thumb->jpeg_quality( $config['jpeg_quality'] );
-				$thumb->save( ROOT_DIR . "/uploads/fotos/foto_" . $id . "." . $type );
-				@unlink( ROOT_DIR . "/uploads/fotos/".$tmp_name );
-				$foto_name = "foto_" . $id . "." . $type;
-				$db->query( "UPDATE " . USERPREFIX . "_users set foto='$foto_name' where user_id=$user_id" );
-			}
-		}
-		login_ulogin_user($user_id,$password);
-	}
-	unset($_POST['token']);
+function get_ulogin_user_from_token($token){
+    $s = file_get_contents('http://ulogin.ru/token.php?token=' . $token . '&host=' . $_SERVER['HTTP_HOST']);
+    return json_decode($s, true);
 }
 
+function get_ulogin_member($identity){
+    global $db, $dle_api;
+    $ulogin_id = $db->super_query( "SELECT user_id,seed,email FROM " . USERPREFIX . "_ulogin where ident='".$db->safesql($identity)."'" );
+    $member = FALSE;
+    if($ulogin_id) {
+        $member = $db->super_query( "SELECT user_id, name FROM " . USERPREFIX . "_users where user_id=".$ulogin_id['user_id'] );
+        if (isset($member['user_id'])) {
+            $password = $identity.$ulogin_id['seed'];
+            if (!$dle_api->external_auth($member['name'], $password)){
+
+                $passwords = $db->super_query("SELECT concat(ident,seed) as password FROM ".USERPREFIX."_ulogin WHERE user_id = ".$member['user_id'] . " AND seed = ".$ulogin_id['seed'], true);
+                $password = reset($passwords);
+
+                while($password){
+
+                    if ($dle_api->external_auth($member['name'], $password['password'])) {
+                        break;
+                    }
+
+                    $password = next($passwords);
+
+                }
+
+                $password = $password['password'];
+            }
+            $member['password'] = md5($password);
+        }
+
+        $member['ulogin_id'] = $ulogin_id['user_id'];
+        $member['email'] = $ulogin_id['email'];
+    }
+    
+    return $member;
+}
+
+function email_exist($email){
+    global $db;
+    $row = $db->super_query("SELECT COUNT(*) as count FROM ".USERPREFIX."_users WHERE email = '$email'");
+    return $row['count'];
+}
+
+
+
+function register_user($user_data = array()){
+    global  $config, $db;
+    $parse = new ParseFilter( );
+    $parse->safe_mode = true;
+    $parse->allow_url = false;
+    $parse->allow_image = false;
+    
+    $fullname = $config['charset'] != 'utf-8' ? convert_unicode($user_data['first_name'].' '.$user_data['last_name'], $config['charset']) : $user_data['first_name'].' '.$user_data['last_name'];
+    $fullname = $db->safesql( $parse->process( $fullname) );
+    $login = isset ($user_data['nickname']) ? $user_data['nickname'] : $user_data['first_name'];
+    $login = $config['charset'] != 'utf-8' ? convert_unicode($login) : $login;
+    $login = $db->safesql( $parse->process( htmlspecialchars( trim( $login ) ) ) );
+    $login = preg_replace('#\s+#i', ' ', $login);
+
+    $not_allow_symbol = array ("\x22", "\x60", "\t", '\n', '\r', "\n", "\r", '\\', ",", "/", "пїЅ", "#", ";", ":", "~", "[", "]", "{", "}", ")", "(", "*", "^", "%", "$", "<", ">", "?", "!", '"', "'", " " );
+    $email = $db->safesql(trim( str_replace( $not_allow_symbol, '', strip_tags( stripslashes( $user_data['email'])))));
+        
+    
+    
+    $idx = 0;
+    $test_login = $login;
+   
+    while ($reg_error = check_ulogin_register($test_login)){
+        $idx ++;
+        $test_login = $login.'_'.$idx;
+    }
+        
+    $login = $test_login;
+                
+    //$stopregistration = false;
+
+    $config['reg_group_ulogin'] = intval( $config['reg_group_ulogin'] ) ? intval( $config['reg_group_ulogin'] ) : 4;
+    $seed=mt_rand();
+    $password = md5(md5($user_data['identity'].$seed));
+
+    $add_time = time() + ($config['date_adjust'] * 60);
+    $_IP = $db->safesql( $_SERVER['REMOTE_ADDR'] );
+			
+    if( intval( $config['reg_group'] ) < 3 ) $config['reg_group'] = 4;
+			
+    $db->query( "INSERT INTO " . USERPREFIX . "_users (name, fullname, password, email, reg_date, lastdate, user_group, info, signature, favorites, xfields, logged_ip) VALUES ('$login', '$fullname', '$password', '$email', '$add_time', '$add_time', '" . $config['reg_group_ulogin'] . "', '', '', '', '', '" . $_IP . "')" );
+    $user_id = $db->insert_id();
+    
+    load_photo($user_data, $user_id);
+    
+    return array('user_id' => $user_id, 'seed' => $seed);
+}
+
+function register_ulogin_user($ulogin_user = array()){
+    
+    global $db;
+    
+    if (is_array($ulogin_user)){
+        
+        if ($ulogin_user['ulogin_id'] > 0)
+            $db->query("UPDATE " . USERPREFIX . "_ulogin SET user_id =".$ulogin_user['user_id'].", seed=".$ulogin_user['seed']." where ident ='".$db->safesql($ulogin_user['identity'])."'");
+        else
+            $db->query("INSERT INTO " . USERPREFIX . "_ulogin (user_id, ident, email, seed) values (".$ulogin_user['user_id'].", '".$ulogin_user['identity']."','".$ulogin_user['email']."',".$ulogin_user['seed'].")");
+          
+    }
+    
+}
+
+function load_photo($photos, $id){
+    
+    global $db;
+    
+    if(isset($photos['photo_big']) && isset($photos['photo'])){
+        if (parse_url($photos['photo_big'], PHP_URL_HOST) != 'ulogin.ru')
+            $photo = $photos['photo_big'];
+        else if (parse_url($photos['photo'], PHP_URL_HOST) != 'ulogin.ru')
+            $photo = $photos['photo'];
+        else
+            $photo = $photos['photo_big'];
+    } else 
+        $photo ="";
+    
+    if( $photo ) {
+        $fparts = pathinfo($photo);
+        $tmp_name = $fparts['basename'];
+        $type = $fparts['extension'];
+        include_once ENGINE_DIR . '/classes/thumb.class.php';
+        $res = @copy($photo, ROOT_DIR . "/uploads/fotos/".$tmp_name);
+        if( $res ) {
+            $photo_seed = mt_rand();
+            $thumb = new thumbnail( ROOT_DIR . "/uploads/fotos/".$tmp_name );
+            $thumb->size_auto("200x200");
+            //$thumb->jpeg_quality( $config['jpeg_quality'] );
+            $thumb->save( ROOT_DIR . "/uploads/fotos/foto_" . $photo_seed. "." . $type );
+            @unlink( ROOT_DIR . "/uploads/fotos/".$tmp_name );
+            $photo_name = "foto_" .$photo_seed. "." . $type;
+            
+            while(file_exists($photo_name)){
+                $photo_seed = mt_rand();
+                $photo_name = "foto_" .$photo_seed. "." . $type;
+            }
+            
+            $db->query( "UPDATE " . USERPREFIX . "_users set foto='$photo_name' where user_id=$id" );
+            }
+	}
+}
+
+function is_ulogin_user($id = 0){
+    global $db, $dle_api;
+
+    $accounts = $dle_api->load_table(USERPREFIX."_ulogin","count(ident)","user_id = ".$id);
+
+    return count($accounts);
+
+}
+
+$db->super_query("CREATE TABLE IF NOT EXISTS `".USERPREFIX."_ulogin` (
+                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+                    `user_id` int(10) unsigned NOT NULL,
+                    `ident` char(255) NOT NULL,
+                    `email` char(255) DEFAULT NULL,
+                    `seed` int(10) unsigned NOT NULL,
+                    PRIMARY KEY (`id`)
+                    ) ENGINE=MyISAM;");
+
+if(isset($_POST['token']) && !$_SESSION['dle_user_id']){ //reg
+
+    $stopregistration = false;
+
+    $ulogin_user = get_ulogin_user_from_token($_POST['token']);
+    
+    if (isset($ulogin_user['error'])){
+        return;
+    }
+        
+    $member = get_ulogin_member($ulogin_user['identity']);
+    
+    if(isset($member['user_id'])){
+
+        $user = $dle_api->take_user_by_id($member['user_id'],"email,name");
+        $mail_parts = explode("@", $member['email']);
+        if ($user['email'] == $mail_parts[0]."+".$user['name']."@".$mail_parts[1]){
+            if (!$dle_api->take_user_by_email($member['email'],"user_id")){
+                $db->query("UPDATE ".USERPREFIX."_users SET email = '".$member['email']."' WHERE user_id = ".$member['user_id']);
+            }
+        }
+        login_ulogin_user($member['user_id'], $member['password']);
+        
+    }else if (email_exist($ulogin_user['email'])){
+        
+        echo '<div id="ulogin_message">
+                    <span>РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ СЃ С‚Р°РєРёРј email СѓР¶Рµ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°РЅ. Р’РѕСЃРїРѕР»СЊР·СѓР№С‚РµСЃСЊ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРµР№ РїСЂРѕС„РёР»РµР№ uLogin.</span>
+                 </div><script>window.setTimeout(function(){var msg = document.getElementById("ulogin_message"); msg.style.display = "none"; },4000);</script>';
+        
+    }else{
+        
+        $reg_user = register_user($ulogin_user);
+        $reg_user['email'] = $ulogin_user['email'];
+        $reg_user['ulogin_id'] = isset($member['ulogin_id']) ? $member['ulogin_id'] : 0;
+        $reg_user['identity'] = $ulogin_user['identity'];
+        register_ulogin_user($reg_user);
+        $password =  md5($ulogin_user['identity'].$reg_user['seed']);
+	    login_ulogin_user($reg_user['user_id'],$password);
+
+    }
+    
+    unset($_POST['token']);
+    
+} else if(isset($_POST['token']) && $_SESSION['dle_user_id'] > 0 && is_ulogin_user(intval($_SESSION['dle_user_id']))){ //sync
+    
+   $user = $dle_api->take_user_by_id($_SESSION['dle_user_id']);
+   if ($user['name'] == $_GET['user'] && $_GET['subaction'] == 'userinfo'){
+      
+       $ulogin_user = get_ulogin_user_from_token($_POST['token']);
+        if (isset($ulogin_user['error'])){
+            return;
+        }
+        
+        $member = get_ulogin_member($ulogin_user['identity']);
+        
+        if(isset($member['user_id'])){
+            
+            if ($member['user_id'] != $_SESSION['dle_user_id']){
+
+                $seed = $dle_api->load_table(USERPREFIX."_ulogin","seed", "user_id = ".$_SESSION['dle_user_id'], false, 0 , 1);
+                $accounts = $db->get_row($db->query("SELECT count(user_id) as accounts FROM ".USERPREFIX."_ulogin WHERE user_id = ".$member['user_id']));
+                if ($accounts['accounts'] > 0){
+                    $photo = $dle_api->load_table(USERPREFIX."_users","foto","user_id = ".$member['user_id']);
+                    $photo = ROOT_DIR . "/uploads/fotos/".$photo['foto'];
+                    if (file_exists($photo)){
+                        @unlink($photo);
+                    }
+                    $db->query("DELETE * FROM " . USERPREFIX . "_users WHERE user_id = ". $member['user_id']);
+                }
+                $db->query("UPDATE " . USERPREFIX . "_ulogin SET user_id =".$_SESSION['dle_user_id'].", seed = ".$seed['seed']." where ident ='".$db->safesql($ulogin_user['identity'])."'");
+            }
+            
+         }else{
+            $seed = $db->get_row($db->query("SELECT seed FROM ".USERPREFIX."_ulogin WHERE user_id = ".$_SESSION['dle_user_id']));
+            $db->query("INSERT INTO " . USERPREFIX . "_ulogin (user_id, ident, email, seed) values (".$_SESSION['dle_user_id'].", '".$ulogin_user['identity']."','".$ulogin_user['email']."',".$seed['seed'].")");
+         }
+   }
+   
+}
 ?>
