@@ -3,7 +3,7 @@
 //=====================================================
 // ULogin DataLife Engine 9.4
 //-----------------------------------------------------
-// Модуль авторизации пользователей с помощью сервиса uLogin
+// ������ ����������� � ����������� ��� ������ uLogin
 //-----------------------------------------------------
 // http://ulogin.ru/
 // team@ulogin.ru
@@ -338,7 +338,7 @@ function load_photo($photos, $id){
     } else 
         $photo ="";
 
-    $user_group = $user_group = get_user_group($id);
+    $user_group = get_user_group($id);
 
     if( $photo && intval($user_group['max_foto'] ) > 0) {
 
