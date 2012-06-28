@@ -21,6 +21,17 @@ if(!defined('DATALIFEENGINE'))
 require_once ENGINE_DIR . '/classes/parse.class.php';
 include ('engine/api/api.class.php');
 
+//===================================================
+// login_ulogin_user
+//---------------------------------------------------
+// login user
+//---------------------------------------------------
+// $id - registred user id
+//---------------------------------------------------
+// $pass - user password
+//---------------------------------------------------
+//
+//===================================================
 function login_ulogin_user($id, $pass) {
     global $db;
     global $config;
@@ -70,6 +81,16 @@ function login_ulogin_user($id, $pass) {
 	$is_logged = TRUE;
 }
 
+//===================================================
+// check_ulogin_register
+//---------------------------------------------------
+// check login name and generate new
+//---------------------------------------------------
+// $name - login name
+//---------------------------------------------------
+//
+//===================================================
+
 function check_ulogin_register($name) {
 	global $lang, $db, $banned_info, $relates_word;
 	$stop = false;
@@ -91,6 +112,15 @@ function check_ulogin_register($name) {
 
 }
 
+//===================================================
+// get_ulogin_user_from_token
+//---------------------------------------------------
+// get user data from uLogin service
+//---------------------------------------------------
+// $token - unique token
+//---------------------------------------------------
+// return array filled with user data
+//===================================================
 
 function get_ulogin_user_from_token($token){
     $s = file_get_contents('http://ulogin.ru/token.php?token=' . $token . '&host=' . $_SERVER['HTTP_HOST']);
@@ -132,13 +162,32 @@ function get_ulogin_member($identity){
     return $member;
 }
 
+//===================================================
+// email_exist
+//---------------------------------------------------
+// check if exist user with same email
+//---------------------------------------------------
+// $email - email to check
+//---------------------------------------------------
+//
+//===================================================
+
 function email_exist($email){
     global $db;
     $row = $db->super_query("SELECT COUNT(*) as count FROM ".USERPREFIX."_users WHERE email = '$email'");
     return $row['count'];
 }
 
-
+//===================================================
+// register_user
+//---------------------------------------------------
+// register user
+//---------------------------------------------------
+// $user_data - array with user data required to
+// register
+//---------------------------------------------------
+//
+//===================================================
 
 function register_user($user_data = array()){
     global  $config, $db;
@@ -188,6 +237,17 @@ function register_user($user_data = array()){
     return array('user_id' => $user_id, 'seed' => $seed);
 }
 
+//===================================================
+// register_ulogin_user
+//---------------------------------------------------
+// add ulogin user identity
+//---------------------------------------------------
+// $ulogin_user - array with user identity, original email,
+// random value
+//---------------------------------------------------
+//
+//===================================================
+
 function register_ulogin_user($ulogin_user = array()){
     
     global $db;
@@ -203,44 +263,139 @@ function register_ulogin_user($ulogin_user = array()){
     
 }
 
+//===================================================
+// uploadPhoto
+//---------------------------------------------------
+// upload image from $url to $filename
+// detect MIME
+//---------------------------------------------------
+// $ulogin_user - array with user identity, email,
+// random value
+//---------------------------------------------------
+// return array filled with MIME (type), filename('tmp_name),
+// file size (size), extension(ext)
+//===================================================
+
+function uploadPhoto($url, $filename){
+    $file = array();
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL,$url);
+    curl_setopt($ch, CURLOPT_NOBODY, 1);
+    curl_setopt($ch, CURLOPT_FAILONERROR, 1);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_HEADER, 1);
+    $result = curl_exec($ch);
+    if (!$result)
+        return false;
+
+    $savepath = ROOT_DIR . "/uploads/fotos/";
+
+    $value = array();
+    preg_match('/Content-Type: (?<value>\w+(\/)\w+)/', $result, $value);
+    $file['type'] = $value['value'];
+    preg_match('/Content-Type: \w+(\/)(?<value>\w+)/', $result, $value);
+    $file['ext'] = $value['value'] == 'jpeg' ? 'jpg' : $value['value'];
+    $file['tmp_name'] = $filename.'.'.$file['ext'];
+    $from = fopen($url,'rb');
+    $to = fopen($savepath.$file['tmp_name'], "wb");
+    $size = 0;
+    if ($from && $to){
+        while(!feof($from)) {
+            $size += fwrite($to, fread($from, 1024 * 8 ), 1024 * 8 );
+        }
+    } else
+        return false;
+
+    fclose($from);
+    fclose($to);
+    $file['size'] = $size;
+    $file['tmp_name'] = basename($file['tmp_name']);
+    return $file;
+}
+
+//===================================================
+// load_photo
+//---------------------------------------------------
+// create thumbnail from image and attach it to user profile
+//---------------------------------------------------
+// $photos - array with ulogin photo and photo_big
+//---------------------------------------------------
+//
+//===================================================
+
 function load_photo($photos, $id){
     
     global $db;
-    
+    global $config;
+
     if(isset($photos['photo_big']) && isset($photos['photo'])){
         if (parse_url($photos['photo_big'], PHP_URL_HOST) != 'ulogin.ru')
             $photo = $photos['photo_big'];
         else if (parse_url($photos['photo'], PHP_URL_HOST) != 'ulogin.ru')
             $photo = $photos['photo'];
         else
-            $photo = $photos['photo_big'];
+            $photo = "";
     } else 
         $photo ="";
-    
-    if( $photo ) {
-        $fparts = pathinfo($photo);
-        $tmp_name = $fparts['basename'];
-        $type = $fparts['extension'];
-        include_once ENGINE_DIR . '/classes/thumb.class.php';
-        $res = @copy($photo, ROOT_DIR . "/uploads/fotos/".$tmp_name);
+
+    $user_group = $user_group = get_user_group($id);
+
+    if( $photo && intval($user_group['max_foto'] ) > 0) {
+
+        $res = uploadPhoto($photo, $id);
+
         if( $res ) {
-            $photo_seed = mt_rand();
-            $thumb = new thumbnail( ROOT_DIR . "/uploads/fotos/".$tmp_name );
-            $thumb->size_auto("200x200");
-            //$thumb->jpeg_quality( $config['jpeg_quality'] );
-            $thumb->save( ROOT_DIR . "/uploads/fotos/foto_" . $photo_seed. "." . $type );
-            @unlink( ROOT_DIR . "/uploads/fotos/".$tmp_name );
-            $photo_name = "foto_" .$photo_seed. "." . $type;
-            
-            while(file_exists($photo_name)){
-                $photo_seed = mt_rand();
-                $photo_name = "foto_" .$photo_seed. "." . $type;
+            include_once ENGINE_DIR . '/classes/thumb.class.php';
+            @chmod( ROOT_DIR . "/uploads/fotos/" . $res['tmp_name'], 0666 );
+            $thumb = new thumbnail( ROOT_DIR . "/uploads/fotos/" . $res['tmp_name']);
+
+            if( $thumb->size_auto($user_group['max_foto']) ) {
+                $thumb->jpeg_quality( $config['jpeg_quality'] );
+                $thumb->save( ROOT_DIR . "/uploads/fotos/foto_" . $res['tmp_name']);
+            } else {
+                if($res['ext'] == "gif" ) {
+                    @rename( ROOT_DIR . "/uploads/fotos/" . $res['tmp_name'], ROOT_DIR . "/uploads/fotos/foto_" . $res['tmp_name'] );
+                } else {
+                    $thumb->jpeg_quality( $config['jpeg_quality'] );
+                    $thumb->save( ROOT_DIR . "/uploads/fotos/foto_" . $res['tmp_name'] );
+                }
             }
-            
-            $db->query( "UPDATE " . USERPREFIX . "_users set foto='$photo_name' where user_id=$id" );
-            }
-	}
+            @unlink( ROOT_DIR . "/uploads/fotos/".$res['tmp_name'] );
+            @chmod( ROOT_DIR . "/uploads/fotos/foto_" . $res['tmp_name'], 0666 );
+            $foto_name = "foto_" . $res['tmp_name'];
+
+            $db->query( "UPDATE " . USERPREFIX . "_users set foto='$foto_name' WHERE user_id = '{$id}'" );
+	    }
+
+    }
 }
+
+//===================================================
+// get_user_group
+//---------------------------------------------------
+// get user group from user id
+//---------------------------------------------------
+// $id - user id
+//---------------------------------------------------
+// return array with group settings
+//===================================================
+
+function get_user_group($id = 0){
+    global $db;
+    global $dle_api;
+    $group_id = $dle_api->take_user_by_id($id, 'user_group');
+    return $db->super_query('SELECT * FROM '.USERPREFIX.'_usergroups WHERE id = '.$group_id['user_group']);
+}
+
+//===================================================
+// is_ulogin_user
+//---------------------------------------------------
+// count uLogin profiles attached to user
+//---------------------------------------------------
+// $id - user id
+//---------------------------------------------------
+// return count of uLogin profiles
+//===================================================
 
 function is_ulogin_user($id = 0){
     global $db, $dle_api;
@@ -274,7 +429,12 @@ if(isset($_POST['token']) && !$_SESSION['dle_user_id']){ //reg
     
     if(isset($member['user_id'])){
 
-        $user = $dle_api->take_user_by_id($member['user_id'],"email,name");
+        $user = $dle_api->take_user_by_id($member['user_id'],"email,name, foto");
+
+        if (!isset($user['foto']) || !file_exists(ROOT_DIR . "/uploads/fotos/".$user['foto'])){
+            load_photo($ulogin_user, $member['user_id']);
+        }
+
         $mail_parts = explode("@", $member['email']);
         if ($user['email'] == $mail_parts[0]."+".$user['name']."@".$mail_parts[1]){
             if (!$dle_api->take_user_by_email($member['email'],"user_id")){
@@ -284,11 +444,16 @@ if(isset($_POST['token']) && !$_SESSION['dle_user_id']){ //reg
         login_ulogin_user($member['user_id'], $member['password']);
         
     }else if (email_exist($ulogin_user['email'])){
-        
-        echo '<div id="ulogin_message">
-                    <span>Пользователь с таким email уже зарегистрирован. Воспользуйтесь синхронизацией профилей uLogin.</span>
-                 </div><script>window.setTimeout(function(){var msg = document.getElementById("ulogin_message"); msg.style.display = "none"; },4000);</script>';
-        
+        global $config;
+        $message = 'Пользователь с таким email уже зарегистрирован. Воспользуйтесь синхронизацией профилей uLogin, если у вас уже имеется аккаунт uLogin.';
+
+        if ($config['charset'] != 'utf-8'){
+            $message = iconv('utf-8',$config['charset'],$message);
+        }
+
+        echo '<div id="ulogin_message" style="text-align:center" align="center">
+                    <span>'.$message.'</span>
+                 </div><script>window.setTimeout(function(){var msg = document.getElementById("ulogin_message"); msg.style.display = "none"; },5000);</script>';
     }else{
         
         $reg_user = register_user($ulogin_user);
