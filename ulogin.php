@@ -450,10 +450,7 @@ if(isset($_POST['token']) && !$_SESSION['dle_user_id']){ //reg
         if ($config['charset'] != 'utf-8'){
             $message = iconv('utf-8',$config['charset'],$message);
         }
-
-        echo '<div id="ulogin_message" style="text-align:center" align="center">
-                    <span>'.$message.'</span>
-                 </div><script>window.setTimeout(function(){var msg = document.getElementById("ulogin_message"); msg.style.display = "none"; },5000);</script>';
+        echo '<script type="text/javascript">window.onload = function(e){alert("'.$message.'");}</script>';
     }else{
         
         $reg_user = register_user($ulogin_user);
