@@ -2,7 +2,7 @@
 Donate link: http://ulogin.ru/
 Tags: ulogin, login, social, authorization
 Requires at least: 8.5
-Tested up to: 9.4
+Tested up to: 9.6
 Stable tag: 1.7
 License: GPL3
 Форма авторизации uLogin через социальные сети. Улучшенный аналог loginza.
@@ -28,7 +28,7 @@ uLogin — это инструмент, который позволяет пол
 		  <td class="label">Синхронизация профилей uLogin:</td>
 		      <td>
 			  <script src="http://ulogin.ru/js/ulogin.js"></script>
-			  <div id="uLogin" x-ulogin-params="display=small&fields=first_name,last_name,photo,email,bdate,nickname&providers=vkontakte,odnoklassniki,mailru,facebook&hidden=other&redirect_uri={ulogin_sync}"></div>
+			  <div id="uLogin" x-ulogin-params="display=small&fields=first_name,last_name,photo,photo_big,email,bdate,nickname&providers=vkontakte,odnoklassniki,mailru,facebook&hidden=other&redirect_uri={ulogin_sync}"></div>
 		      </td>
 	      </tr>
   [/group]
