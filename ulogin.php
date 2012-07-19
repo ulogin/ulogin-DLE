@@ -469,7 +469,6 @@ if(isset($_POST['token']) && !$_SESSION['dle_user_id']){ //reg
     
    $user = $dle_api->take_user_by_id($_SESSION['dle_user_id']);
    if ($user['name'] == $_GET['user'] && $_GET['subaction'] == 'userinfo'){
-      
        $ulogin_user = get_ulogin_user_from_token($_POST['token']);
         if (isset($ulogin_user['error'])){
             return;
@@ -482,21 +481,34 @@ if(isset($_POST['token']) && !$_SESSION['dle_user_id']){ //reg
             if ($member['user_id'] != $_SESSION['dle_user_id']){
 
                 $seed = $dle_api->load_table(USERPREFIX."_ulogin","seed", "user_id = ".$_SESSION['dle_user_id'], false, 0 , 1);
-                $accounts = $db->get_row($db->query("SELECT count(user_id) as accounts FROM ".USERPREFIX."_ulogin WHERE user_id = ".$member['user_id']));
-                if ($accounts['accounts'] > 0){
-                    $photo = $dle_api->load_table(USERPREFIX."_users","foto","user_id = ".$member['user_id']);
-                    $photo = ROOT_DIR . "/uploads/fotos/".$photo['foto'];
-                    if (file_exists($photo)){
-                        @unlink($photo);
+
+                if (isset($seed['seed'])){
+
+                    $accounts = $db->get_row($db->query("SELECT count(user_id) as accounts FROM ".USERPREFIX."_ulogin WHERE user_id = ".$member['user_id']));
+
+                    if ($accounts['accounts'] > 0){
+
+                        $photo = $dle_api->load_table(USERPREFIX."_users","foto","user_id = ".$member['user_id']);
+                        $photo = ROOT_DIR . "/uploads/fotos/".$photo['foto'];
+
+                        if (file_exists($photo)){
+                            @unlink($photo);
+                        }
+
+                        $db->query("DELETE FROM " . USERPREFIX . "_users WHERE user_id = ". $member['user_id']);
+
                     }
-                    $db->query("DELETE * FROM " . USERPREFIX . "_users WHERE user_id = ". $member['user_id']);
+
+                    $db->query("UPDATE " . USERPREFIX . "_ulogin SET user_id =".$_SESSION['dle_user_id'].", seed = ".$seed['seed']." where ident ='".$db->safesql($ulogin_user['identity'])."'");
+
                 }
-                $db->query("UPDATE " . USERPREFIX . "_ulogin SET user_id =".$_SESSION['dle_user_id'].", seed = ".$seed['seed']." where ident ='".$db->safesql($ulogin_user['identity'])."'");
             }
             
          }else{
-            $seed = $db->get_row($db->query("SELECT seed FROM ".USERPREFIX."_ulogin WHERE user_id = ".$_SESSION['dle_user_id']));
-            $db->query("INSERT INTO " . USERPREFIX . "_ulogin (user_id, ident, email, seed) values (".$_SESSION['dle_user_id'].", '".$ulogin_user['identity']."','".$ulogin_user['email']."',".$seed['seed'].")");
+            $seed = $dle_api->load_table(USERPREFIX."_ulogin","seed", "user_id = ".$_SESSION['dle_user_id'], false, 0 , 1);;
+
+            if (isset($seed['seed']))
+                $db->query("INSERT INTO " . USERPREFIX . "_ulogin (user_id, ident, email, seed) values (".$_SESSION['dle_user_id'].", '".$ulogin_user['identity']."','".$ulogin_user['email']."',".$seed['seed'].")");
          }
    }
    
