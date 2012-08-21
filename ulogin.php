@@ -123,7 +123,29 @@ function check_ulogin_register($name) {
 //===================================================
 
 function get_ulogin_user_from_token($token){
-    $s = file_get_contents('http://ulogin.ru/token.php?token=' . $token . '&host=' . $_SERVER['HTTP_HOST']);
+
+    $s = array('error'=>'"file_get_contents" or "curl" required');
+
+    if (function_exists('file_get_contents')){
+
+        if($result = file_get_contents('http://ulogin.ru/token.php?token=' . $token . '&host=' . $_SERVER['HTTP_HOST'])){
+
+            $s = $result;
+
+        }
+
+    }
+
+    if(function_exists('curl_init') && isset($s['error'])){
+
+        $request = curl_init('http://ulogin.ru/token.php?token=' . $token . '&host=' . $_SERVER['HTTP_HOST']);
+        curl_setopt($request, CURLOPT_RETURNTRANSFER, 1);
+        $result = curl_exec($request);
+
+        if ($result)
+            $s = $result;
+
+    }
     return json_decode($s, true);
 }
 
@@ -278,8 +300,7 @@ function register_ulogin_user($ulogin_user = array()){
 
 function uploadPhoto($url, $filename){
     $file = array();
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL,$url);
+    $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_NOBODY, 1);
     curl_setopt($ch, CURLOPT_FAILONERROR, 1);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
