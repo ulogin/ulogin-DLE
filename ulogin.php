@@ -124,29 +124,23 @@ function check_ulogin_register($name) {
 
 function get_ulogin_user_from_token($token){
 
-    $s = array('error'=>'"file_get_contents" or "curl" required');
+    $s = array("error" => "file_get_contents or curl required");
+    if (function_exists('file_get_contents') && ini_get('allow_url_open')){
 
-    if (function_exists('file_get_contents')){
+        $result = file_get_contents('http://ulogin.ru/token.php?token=' . $token . '&host=' . $_SERVER['HTTP_HOST']);
+        $s = json_decode($result, true);
 
-        if($result = file_get_contents('http://ulogin.ru/token.php?token=' . $token . '&host=' . $_SERVER['HTTP_HOST'])){
-
-            $s = $result;
-
-        }
-
-    }
-
-    if(function_exists('curl_init') && isset($s['error'])){
+    }elseif(function_exists('curl_init')){
 
         $request = curl_init('http://ulogin.ru/token.php?token=' . $token . '&host=' . $_SERVER['HTTP_HOST']);
         curl_setopt($request, CURLOPT_RETURNTRANSFER, 1);
         $result = curl_exec($request);
 
         if ($result)
-            $s = $result;
+            $s = json_decode($result, true);
 
     }
-    return json_decode($s, true);
+    return $s;
 }
 
 function get_ulogin_member($identity){
@@ -443,6 +437,8 @@ if(isset($_POST['token']) && !$_SESSION['dle_user_id']){ //reg
     $ulogin_user = get_ulogin_user_from_token($_POST['token']);
     
     if (isset($ulogin_user['error'])){
+
+        echo "<script>alert('".$ulogin_user['error']."');</script>";
         return;
     }
         
