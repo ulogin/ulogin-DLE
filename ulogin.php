@@ -125,12 +125,12 @@ function check_ulogin_register($name) {
 function get_ulogin_user_from_token($token){
 
     $s = array("error" => "file_get_contents or curl required");
-    if (function_exists('file_get_contents') && ini_get('allow_url_open')){
+    if (function_exists('file_get_contents') && ini_get('allow_url_fopen')){
 
         $result = file_get_contents('http://ulogin.ru/token.php?token=' . $token . '&host=' . $_SERVER['HTTP_HOST']);
         $s = json_decode($result, true);
 
-    }elseif(function_exists('curl_init')){
+    }elseif(in_array('curl', get_loaded_extensions())){
 
         $request = curl_init('http://ulogin.ru/token.php?token=' . $token . '&host=' . $_SERVER['HTTP_HOST']);
         curl_setopt($request, CURLOPT_RETURNTRANSFER, 1);
@@ -432,7 +432,7 @@ $db->super_query("CREATE TABLE IF NOT EXISTS `".USERPREFIX."_ulogin` (
 
 if(isset($_POST['token']) && !$_SESSION['dle_user_id']){ //reg
 
-    $stopregistration = false;
+    //$stopregistration = false;
 
     $ulogin_user = get_ulogin_user_from_token($_POST['token']);
     
