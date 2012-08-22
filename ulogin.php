@@ -438,8 +438,8 @@ if(isset($_POST['token']) && !$_SESSION['dle_user_id']){ //reg
     
     if (isset($ulogin_user['error'])){
 
-        echo "<script>alert('".$ulogin_user['error']."');</script>";
-        return;
+           return;
+
     }
         
     $member = get_ulogin_member($ulogin_user['identity']);
@@ -482,7 +482,7 @@ if(isset($_POST['token']) && !$_SESSION['dle_user_id']){ //reg
     
     unset($_POST['token']);
     
-} else if(isset($_POST['token']) && $_SESSION['dle_user_id'] > 0 && is_ulogin_user(intval($_SESSION['dle_user_id']))){ //sync
+} elseif(isset($_POST['token']) && $_SESSION['dle_user_id'] > 0 && is_ulogin_user(intval($_SESSION['dle_user_id']))){ // sync uLogin accounts
     
    $user = $dle_api->take_user_by_id($_SESSION['dle_user_id']);
    if ($user['name'] == $_GET['user'] && $_GET['subaction'] == 'userinfo'){
