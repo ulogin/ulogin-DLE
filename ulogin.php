@@ -421,16 +421,25 @@ function is_ulogin_user($id = 0){
 
 }
 
-$db->super_query("CREATE TABLE IF NOT EXISTS `".USERPREFIX."_ulogin` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `user_id` int(10) unsigned NOT NULL,
-                    `ident` char(255) NOT NULL,
-                    `email` char(255) DEFAULT NULL,
-                    `seed` int(10) unsigned NOT NULL,
-                    PRIMARY KEY (`id`)
-                    ) ENGINE=MyISAM;");
+function check_ulogin_db(){
+
+    global $db;
+
+    $db->super_query("CREATE TABLE IF NOT EXISTS `".USERPREFIX."_ulogin` (
+                        `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+                        `user_id` int(10) unsigned NOT NULL,
+                        `ident` char(255) NOT NULL,
+                        `email` char(255) DEFAULT NULL,
+                        `seed` int(10) unsigned NOT NULL,
+                        PRIMARY KEY (`id`)
+                        ) ENGINE=MyISAM;");
+
+
+}
 
 if(isset($_POST['token']) && !$_SESSION['dle_user_id']){ //reg
+
+    check_ulogin_db();
 
     //$stopregistration = false;
 
@@ -483,7 +492,9 @@ if(isset($_POST['token']) && !$_SESSION['dle_user_id']){ //reg
     unset($_POST['token']);
     
 } elseif(isset($_POST['token']) && $_SESSION['dle_user_id'] > 0 && is_ulogin_user(intval($_SESSION['dle_user_id']))){ // sync uLogin accounts
-    
+
+    check_ulogin_db();
+
    $user = $dle_api->take_user_by_id($_SESSION['dle_user_id']);
    if ($user['name'] == $_GET['user'] && $_GET['subaction'] == 'userinfo'){
        $ulogin_user = get_ulogin_user_from_token($_POST['token']);
