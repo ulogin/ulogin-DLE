@@ -343,7 +343,7 @@ function load_photo($photos, $id){
     global $db;
     global $config;
 
-    if(isset($photos['photo_big']) && isset($photos['photo'])){
+    if(isset($photos['photo_big']) or isset($photos['photo'])){
         if (parse_url($photos['photo_big'], PHP_URL_HOST) != 'ulogin.ru')
             $photo = $photos['photo_big'];
         else if (parse_url($photos['photo'], PHP_URL_HOST) != 'ulogin.ru')
