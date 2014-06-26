@@ -45,9 +45,7 @@ function login_ulogin_user($id, $pass) {
 	set_cookie( "dle_user_id", $member_id['user_id'], 365 );
 	set_cookie( "dle_password", $_POST['login_password'], 365 );
 
-	@session_register( 'dle_user_id' );
-	@session_register( 'dle_password' );
-	@session_register( 'member_lasttime' );
+	session_start();
 
 	$_SESSION['dle_user_id'] = $member_id['user_id'];
 	$_SESSION['dle_password'] = $pass;
