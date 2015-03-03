@@ -1,0 +1,29 @@
+.ulogin_form {
+    display: inline-block;
+    line-height: 1em;
+}
+
+.ulogin_label {
+    margin-top: 5px;
+    margin-left: 15px;
+    font-size: 16px;
+}
+
+.ulogin_profile .ulogin_accounts,
+.ulogin_profile .ulogin_form,
+.ulogin_profile .ulogin_note {
+    margin-top: 5px;
+    margin-left: 35px;
+}
+
+
+.ulogin_provider {
+    margin-right: 10px;
+    display: inline-block;
+    cursor: pointer;
+    float: left;
+}
+
+.ulogin_provider:hover {
+    opacity: 0.75;
+}
