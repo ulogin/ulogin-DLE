@@ -103,7 +103,7 @@ License: GNU General Public License, version 2
 `
 
 
-#### 6. В файле **engine/modules/main.php:373** 
+#### 6. В файле **engine/modules/main.php:373**  (в версиях DLE < 10.4 ищем в файле **index.php:339**)
 
 - перед(!) 
 
