@@ -1,7 +1,6 @@
 <br/>
 <br/>
 <div class="ulogin_profile">
-    <div class="pheading"><h2 class="heading">{ulogin_profile_title}</h2></div>
     <div class="ulogin_label">{add_account}</div>
         {include file="engine/modules/ulogin/ulogin_tpl_form.php?uloginid={uloginid}&ulogin_online=true"}
     <div class="ulogin_note"><small>{add_account_explain}</small></div>

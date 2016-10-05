@@ -15,7 +15,8 @@ License: GNU General Public License, version 2
 Зайдите в папку **upload->templates** и *измените название папки "Default"* на название вашего текущего шаблона сайта.  
 После этого скопируйте к себе на сервер все файлы из папки **upload**.  
 
-#### 1. В файле **engine/engine.php:35**
+#### 1. В файле **engine/engine.php:35** 
+для DLE 11+ строка 38
 
 - после  
 
@@ -48,6 +49,7 @@ License: GNU General Public License, version 2
 
 
 #### 3. В файле **engine/modules/profile.php:419** 
+для DLE 11+ строка 490
 
 - после  
 
@@ -63,6 +65,7 @@ License: GNU General Public License, version 2
 
 
 #### 4. В файле **engine/skins/default.skin.php:290** 
+для DLE 11+ строка 299
 
 - после  
 
@@ -83,6 +86,7 @@ License: GNU General Public License, version 2
 
 
 #### 5. В файле **engine/inc/options.php:117** 
+для DLE 11+ строка 111
 
 - после  
 
@@ -103,7 +107,9 @@ License: GNU General Public License, version 2
 `
 
 
-#### 6. В файле **engine/modules/main.php:373**  (в версиях DLE < 10.4 ищем в файле **index.php:339**)
+#### 6. В файле **engine/modules/main.php:373**  
+для DLE 11+ строка 526
+для DLE < 10.4 ищем в файле **index.php:339**
 
 - перед(!) 
 
