@@ -2,12 +2,24 @@
 
 Donate link: http://ulogin.ru  
 Tags: ulogin, login, social, authorization  
-Tested up to: 10.4 
-Stable tag: 2.0.0  
+Tested up to: 11.2 
+Stable tag: 2.1.0  
 License: GNU General Public License, version 2  
 
 **uLogin** — это инструмент, который позволяет пользователям получить единый доступ к различным Интернет-сервисам без необходимости повторной регистрации,
 а владельцам сайтов — получить дополнительный приток пользователей из социальных сетей и популярных порталов (Google, Яндекс, Mail.ru, ВКонтакте, Facebook и др.)
+
+
+## Версии DLE
+
+[плагин для версии DLE 11.1 и ниже](https://github.com/ulogin/ulogin-DLE/tree/master)
+
+В версии движка 11.2 были внесены некоторые изменения в систему генерации пароля. 
+Поэтому мы выделили плагин для этой (и старших) версий в отдельную ветку.
+ 
+По этой же причине у пользователей, привязавших аккаунты соцсетей в версии 11.1 или ниже, 
+после обновления до версии 11.2+ могут возникать проблемы с авторизацией. Сообщать о проблеме будет стандартное сообщение _"Зайдите через стандартную форму входа. В настройках своего профиля привяжите хотя бы один аккаунт социальной сети ..."_. 
+В этом случае остается только воспользоваться стандартной формой входа и привязать заново аккаунт соцсети. После этого авторизация через него будет работать нормально. 
 
 
 ## Установка
@@ -15,8 +27,7 @@ License: GNU General Public License, version 2
 Зайдите в папку **upload->templates** и *измените название папки "Default"* на название вашего текущего шаблона сайта.  
 После этого скопируйте к себе на сервер все файлы из папки **upload**.  
 
-#### 1. В файле **engine/engine.php:35** 
-для DLE 11+ строка 38
+#### 1. В файле **engine/engine.php:38** 
 
 - после  
 
@@ -33,7 +44,7 @@ License: GNU General Public License, version 2
 `
 
 
-#### 2. В файле **admin.php:44**
+#### 2. В файле **admin.php:34**
 
 - после  
 
@@ -48,8 +59,7 @@ License: GNU General Public License, version 2
 `
 
 
-#### 3. В файле **engine/modules/profile.php:419** 
-для DLE 11+ строка 490
+#### 3. В файле **engine/modules/profile.php:492** 
 
 - после  
 
@@ -58,14 +68,13 @@ License: GNU General Public License, version 2
 `
  
 + вставить  
-   
+   7
 ` 
     $tpl->set( '{my_profile}', ( $row['user_id'] == $member_id['user_id'] ? true : false ) );
 `
 
 
-#### 4. В файле **engine/skins/default.skin.php:290** 
-для DLE 11+ строка 299
+#### 4. В файле **engine/skins/default.skin.php:304** 
 
 - после  
 
@@ -86,7 +95,6 @@ License: GNU General Public License, version 2
 
 
 #### 5. В файле **engine/inc/options.php:117** 
-для DLE 11+ строка 111
 
 - после  
 
@@ -107,9 +115,7 @@ License: GNU General Public License, version 2
 `
 
 
-#### 6. В файле **engine/modules/main.php:373**  
-для DLE 11+ строка 526
-для DLE < 10.4 ищем в файле **index.php:339**
+#### 6. В файле **engine/modules/main.php:539**  
 
 - перед(!) 
 
@@ -129,7 +135,7 @@ License: GNU General Public License, version 2
 Далее производится вставка кода в файлы шаблона. Строки для поиска указаны на примере шаблона **Default**.
 
 
-#### 7. В файле **templates/Default/main.tpl:61**
+#### 7. В файле **templates/Default/main.tpl:104**
 
 - после  
 
@@ -144,13 +150,13 @@ License: GNU General Public License, version 2
 `
 
 
-#### 8. В файле **templates/Default/userinfo.tpl:41**
+#### 8. В файле **templates/Default/userinfo.tpl:38**
 
 - после  
 
 ` 
-    [not-logged]
-    <div id="options" style="display:none;">
+    <!-- Настройки пользователя -->
+    <div id="options">
 `
  
 + вставить  
@@ -160,15 +166,12 @@ License: GNU General Public License, version 2
 `
 
 
-#### 9. В файле **templates/Default/login.tpl:33**
+#### 9. В файле **templates/Default/login.tpl:52**
 
 - после  
 
 ` 
-    <form method="post" action="">
-        <div id="logform" class="radial">
-            <ul class="reset">
-                <li class="lfield">{include file="engine/modules/ulogin/ulogin_tpl_form.php"}</li>
+    <ul class="login_form">
 `
  
 + вставить  
@@ -176,22 +179,6 @@ License: GNU General Public License, version 2
 ` 
     <li class="lfield">{include file="engine/modules/ulogin/ulogin_tpl_form.php"}</li>
 `
-
-
-#### 10. В файле **templates/Default/login.tpl:52**
-
-- после  
-
-` 
-    <li class="lvsep"><a href="{registration-link}">Регистрация</a></li>
-`
- 
-+ вставить  
-   
-` 
-    <li class="lvsep">Войти с помощью:</li><li class="lvsep" style="background: none">{include file="engine/modules/ulogin/ulogin_tpl_form.php"}</li>
-`
-
 
 
 ## Модуль "uLogin - авторизация"
@@ -227,7 +214,7 @@ License: GNU General Public License, version 2
 
 ## Особенности
 
-Вы можете добавить форму виджета uLogin в любом месте шаблона, вставив следующий код (как в пунктах 9, 10 установки)
+Вы можете добавить форму виджета uLogin в любом месте шаблона, вставив следующий код (как в пункте 9 установки)
 
 `
     {include file="engine/modules/ulogin/ulogin_tpl_form.php"}
@@ -245,5 +232,3 @@ License: GNU General Public License, version 2
     {include file="engine/modules/ulogin/ulogin_tpl_form.php?uloginid=11111111"}
     {include file="engine/modules/ulogin/ulogin_tpl_profile.php?my_profile={my_profile}&uloginid=11111111"}
 `
-
-
